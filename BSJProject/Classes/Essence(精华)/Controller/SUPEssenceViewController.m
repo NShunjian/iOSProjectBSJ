@@ -9,6 +9,9 @@
 #import "SUPEssenceViewController.h"
 #import "SUPRecommendTagsViewController.h"
 #import "BSJTopicViewController.h"
+#import "SUPAudioVoiceViewController.h"
+#import "ViewController.h"
+
 @interface SUPEssenceViewController ()<ZJScrollPageViewDelegate>
 @property (nonatomic, weak) ZJScrollPageView *scrollPageView;
 @property(strong, nonatomic)NSArray<NSString *> *titles;
@@ -22,7 +25,6 @@
     
     //必要的设置, 如果没有设置可能导致内容显示不正常
     self.automaticallyAdjustsScrollViewInsets = NO;
-    
     
     //    1为全部，10为图片，29为段子，31为音频，41为视频
     
@@ -215,6 +217,10 @@
 /** 右边的按钮的点击 */
 -(void)rightButtonEvent:(UIButton *)sender navigationBar:(SUPNavigationBar *)navigationBar
 {
+    ViewController *playerVc = [[ViewController alloc] init];
+    //    playerVc.voiceUrl = self.topicViewModel.topic.voiceUrl.absoluteString;
+    [self.navigationController pushViewController:playerVc animated:NO];
+    
     
     NSLog(@"%s", __func__);
 }

@@ -22,7 +22,7 @@
     AFNetworkReachabilityManager *mgr = [AFNetworkReachabilityManager sharedManager];
     
     [[SDWebImageManager sharedManager] diskImageExistsForURL:originImageURL completion:^(BOOL isInCache) {
-        
+//         [[SDImageCache sharedImageCache] setValue:nil forKey:@"memCache"];
         if (mgr.isReachableViaWiFi || isInCache) {
             [self sd_setImageWithURL:originImageURL placeholderImage:placeholder options:options progress:progressBlock completed:completedBlock];
         }else if (mgr.isReachableViaWWAN) {

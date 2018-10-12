@@ -78,7 +78,7 @@ static NSString * const SUPUserId = @"user";
     NSMutableDictionary *params = [NSMutableDictionary dictionary];
     params[@"a"] = @"category";
     params[@"c"] = @"subscribe";
-    [[SUPRequestManager sharedManager] GET:@"http://api.budejie.com/api/api_open.php" parameters:params completion:^(SUPBaseResponse *response) {
+    [[SUPRequestManager sharedManager] GET:@"http://s.budejie.com/topic/list/jingxuan/1/bs0315-iphone-4.5.6/0-20.json" parameters:nil completion:^(SUPBaseResponse *response) {
         // 隐藏指示器
         [SVProgressHUD dismiss];
         SUPLog(@"%@",response.responseObject);

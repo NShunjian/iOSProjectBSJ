@@ -17,4 +17,10 @@
 /** <#digest#> */
 @property (nonatomic, strong) BSJTopicViewModel *topicViewModel;
 
+@property (nonatomic, strong) ZFPlayerController *player;
+
+@property (nonatomic, copy) void(^detailVCPopCallback)(void);
+
+@property (nonatomic, copy) void(^detailVCPlayCallback)(void);
+
 @end

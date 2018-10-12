@@ -56,11 +56,11 @@
 /** 展示图片的控件 */
 @property (weak, nonatomic) BSJTopicPictureView *pictureView;
 
-/** 展示声音 */
-@property (weak, nonatomic) BSJTopicVoiceView *voiceView;
+///** 展示声音 */
+//@property (weak, nonatomic) BSJTopicVoiceView *voiceView;
 
-/** 展示视频 */
-@property (weak, nonatomic)  BSJTopicVideoView *videoView;
+///** 展示视频 */
+//@property (weak, nonatomic)  BSJTopicVideoView *videoView;
 
 /**
  热门评论的 Label
@@ -68,14 +68,71 @@
 @property (weak, nonatomic) IBOutlet YYLabel *topCmtContentView;
 @property (weak, nonatomic) IBOutlet NSLayoutConstraint *topCmtHeightConstraint;
 
+
+@property (nonatomic, strong) UIView *fullMaskView;
+@property (nonatomic, weak) id<ZFTableViewCellDelegate> delegate;
+@property (nonatomic, strong) NSIndexPath *indexPath;
 @end
 
 @implementation SUPTopicCell
+
+
+- (void)setDelegate:(id<ZFTableViewCellDelegate>)delegate withIndexPath:(NSIndexPath *)indexPath {
+    self.delegate = delegate;
+    self.indexPath = indexPath;
+}
+
+- (void)setNormalMode {
+    self.fullMaskView.hidden = YES;
+//    self.titleLabel.textColor = [UIColor blackColor];
+//    self.nickNameLabel.textColor = [UIColor blackColor];
+    self.contentView.backgroundColor = [UIColor whiteColor];
+}
+
+- (void)showMaskView {
+    [UIView animateWithDuration:0.3 animations:^{
+        self.fullMaskView.alpha = 1;
+    }];
+}
+
+- (void)hideMaskView {
+    [UIView animateWithDuration:0.3 animations:^{
+        self.fullMaskView.alpha = 0;
+    }];
+}
+
+
+- (void)playBtnClick:(UIButton *)sender {
+    if ([self.delegate respondsToSelector:@selector(zf_playTheVideoAtIndexPath:)]) {
+        [self.delegate zf_playTheVideoAtIndexPath:self.indexPath];
+    }
+}
+
+- (UIView *)fullMaskView {
+    if (!_fullMaskView) {
+        _fullMaskView = [UIView new];
+        _fullMaskView.frame = self.contentView.bounds;
+        _fullMaskView.backgroundColor = [[UIColor blackColor] colorWithAlphaComponent:0.8];
+        _fullMaskView.userInteractionEnabled = NO;
+    }
+    return _fullMaskView;
+}
+
+
+
+
+
+
+
+
+
+
+
+
 + (instancetype)cell
 {
     return [[[NSBundle mainBundle] loadNibNamed:NSStringFromClass(self) owner:nil options:nil] firstObject];
 }
-
 
 
 - (void)setupBSJTopicCellUIOnce
@@ -86,6 +143,7 @@
     self.headerImageView.layer.masksToBounds = YES;
     
     self.selectionStyle = UITableViewCellSelectionStyleNone;
+     [self insertSubview:self.fullMaskView aboveSubview:self.contentView];
 }
 
 - (void)setTopicViewModel:(BSJTopicViewModel *)topicViewModel
@@ -124,7 +182,6 @@
     {
         self.voiceView.frame = topicViewModel.pictureFrame;
         self.voiceView.topicViewModel = topicViewModel;
-        
         _pictureView.hidden = YES;
         _voiceView.hidden = NO;
         _videoView.hidden = YES;
@@ -139,7 +196,9 @@
     {
         self.videoView.frame = topicViewModel.pictureFrame;
         self.videoView.topicViewModel = topicViewModel;
-        
+        self.videoView.playCallback = ^{
+            [self playBtnClick:nil];
+        };
         _pictureView.hidden = YES;
         _voiceView.hidden = YES;
         _videoView.hidden = NO;
@@ -174,7 +233,7 @@
 
 - (IBAction)repostButtonClick:(UIButton *)sender {
     
-//    [SUPUMengHelper shareTitle:self.topicViewModel.topic.name subTitle:self.topicViewModel.topic.text thumbImage:self.topicViewModel.topic.profile_image.absoluteString shareURL:self.topicViewModel.topic.weixin_url];
+//  [SUPUMengHelper shareTitle:self.topicViewModel.topic.name subTitle:self.topicViewModel.topic.text thumbImage:self.topicViewModel.topic.profile_image.absoluteString shareURL:self.topicViewModel.topic.weixin_url];
 }
 - (IBAction)commentButtonClick:(UIButton *)sender {
 }
@@ -213,6 +272,8 @@
     if(_videoView == nil)
     {
         BSJTopicVideoView *videoView = [[BSJTopicVideoView alloc] init];
+        videoView.tag = 100;
+        videoView.contentMode = UIViewContentModeScaleAspectFill;
         [self.contentView addSubview:videoView];
         _videoView = videoView;
         

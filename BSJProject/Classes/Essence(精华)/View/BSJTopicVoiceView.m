@@ -9,8 +9,13 @@
 #import "BSJTopicVoiceView.h"
 #import "BSJTopicViewModel.h"
 #import <M13ProgressViewRing.h>
+#import "SUPAudioVoiceViewController.h"
+#import "CFCDView.h"
+#import <FSAudioStream.h>
+#import <AVFoundation/AVFoundation.h>
+#import <DALabeledCircularProgressView.h>
 
-
+//typedef void(^butRef)(void);
 @interface BSJTopicVoiceView ()
 
 /** <#digest#> */
@@ -28,9 +33,17 @@
 /** <#digest#> */
 @property (weak, nonatomic) UIButton *voicePlayButton;
 
+@property (strong, nonatomic) AVPlayerItem *playerItem;
 @end
 
+static AVPlayer * voice_player_;
+static UIButton *lastPlayBtn_;
+static BSJTopic *lastTopicM_;
+static NSTimer *avTimer_;
+static DALabeledCircularProgressView  *progressV_;
+
 @implementation BSJTopicVoiceView
+
 
 
 - (void)setupUIOnce
@@ -43,23 +56,28 @@
     self.backgroundColor = [UIColor groupTableViewBackgroundColor];
     
     self.voicePlayButton.enabled = YES;
+    
 }
 
 - (void)drawRect:(CGRect)rect
 {
     [super drawRect:rect];
     
-    
     UIImage *logo = [UIImage imageNamed:@"imageBackground"];
     
     [logo drawAtPoint:CGPointMake((rect.size.width - logo.size.width) * 0.5, 5)];
+   
+    
 }
 
 
 - (void)setTopicViewModel:(BSJTopicViewModel *)topicViewModel
 {
     _topicViewModel = topicViewModel;
-    
+    if (lastTopicM_ && ![_topicViewModel.topic.ID isEqualToString:lastTopicM_.ID]){
+        progressV_.hidden = YES;
+        [progressV_ removeFromSuperview];
+    }
     
     
     // 1, playcount
@@ -92,9 +110,44 @@
 
         
     }];
+    [self.voicePlayButton setImage:[UIImage imageNamed:topicViewModel.topic.voicePlaying ? @"playButtonPause":@"playButtonPlay"] forState:UIControlStateNormal];
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        self.playerItem = [AVPlayerItem playerItemWithURL:self.topicViewModel.topic.voiceUrl];
+        voice_player_ = [AVPlayer playerWithPlayerItem:self.playerItem];
+        avTimer_ = [NSTimer scheduledTimerWithTimeInterval:0.1 target:self selector:@selector(timer) userInfo:nil repeats:YES];
+        //[[NSRunLoop mainRunLoop] addTimer:avTimer_ forMode:NSRunLoopCommonModes];
+        [avTimer_ setFireDate:[NSDate distantFuture]];
+        
+        progressV_ = [[DALabeledCircularProgressView alloc] initWithFrame:CGRectZero];
+        progressV_.roundedCorners = YES;
+        progressV_.progressLabel.textColor = [UIColor redColor];
+        progressV_.trackTintColor = [UIColor clearColor];
+        progressV_.progressTintColor = [UIColor redColor];
+        progressV_.hidden = YES;
+        progressV_.progressLabel.text = @"";
+        progressV_.thicknessRatio = 0.1;
+        [progressV_ setProgress:0 animated:NO];
+        
+    });
+    if (topicViewModel.topic.voicePlaying){
+        [self insertSubview:progressV_ belowSubview:self.voicePlayButton];
+        progressV_.hidden = NO;
+    }else{
+        progressV_.hidden = YES;
+    }
     
 }
-
+- (void)timer{
+    //NSLog(@" --- progress --- ");
+    Float64 currentTime = CMTimeGetSeconds(voice_player_.currentItem.currentTime);
+    if (currentTime > 0){
+        progressV_.hidden = NO;
+        [progressV_ setProgress:currentTime / CMTimeGetSeconds(voice_player_.currentItem.duration) animated:YES];
+        [progressV_.progressLabel setText:[NSString stringWithFormat:@"%.0f%%",progressV_.progress * 100]];
+//        NSLog(@" --- progress %f --- ",progressV_.progress)
+    }
+}
 
 
 #pragma mark - getter
@@ -159,13 +212,9 @@
             
             make.edges.equalTo(self).insets(UIEdgeInsetsMake(0, 0, 0, 0));
         }];
-        
-        
     }
     return _pictureImageView;
 }
-
-
 
 - (M13ProgressViewRing *)ringProgressView
 {
@@ -199,14 +248,10 @@
     if(_voicePlayButton == nil)
     {
         UIButton *btn = [[UIButton alloc] init];
-        [self.pictureImageView addSubview:btn];
+        [self addSubview:btn];
         _voicePlayButton = btn;
         
         [btn setBackgroundImage:[UIImage imageNamed:@"playButton"] forState:UIControlStateNormal];
-        [btn setBackgroundImage:[UIImage imageNamed:@"playButtonClick"] forState:UIControlStateHighlighted];
-        [btn setImage:[UIImage imageNamed:@"playButtonPlay"] forState:UIControlStateNormal];
-        [btn setImage:[UIImage imageNamed:@"playButtonPause"] forState:UIControlStateSelected];
-        
         
         [btn setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
         
@@ -215,12 +260,76 @@
             make.center.centerOffset(CGPointZero);
             
         }];
+
+         [btn addTarget:self action:@selector(playVideo:) forControlEvents:UIControlEventTouchUpInside];
         
     }
     return _voicePlayButton;
 }
 
-
+- (void)playVideo:(UIButton *)playBtn
+{
+    playBtn.selected = !playBtn.isSelected;
+    lastPlayBtn_.selected = !lastPlayBtn_.isSelected;
+    if (lastTopicM_ != self.topicViewModel.topic) {
+        [[NSNotificationCenter defaultCenter] removeObserver:self name:AVPlayerItemDidPlayToEndTimeNotification object:self.playerItem];
+        
+        self.playerItem = [AVPlayerItem playerItemWithURL:self.topicViewModel.topic.voiceUrl];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(playerItemDidReachEnd:)
+                                                     name:AVPlayerItemDidPlayToEndTimeNotification
+                                                   object:self.playerItem];
+        [voice_player_ replaceCurrentItemWithPlayerItem:self.playerItem];
+        
+        progressV_.frame = CGRectMake(playBtn.frame.origin.x-2, playBtn.frame.origin.y-2, playBtn.frame.size.width+4, playBtn.frame.size.height+4);
+        [self insertSubview:progressV_ belowSubview:self.voicePlayButton];
+        [progressV_ setProgress:0 animated:NO];
+        
+        [voice_player_ play];
+        [avTimer_ setFireDate:[NSDate date]];
+        lastTopicM_.voicePlaying = NO;
+        self.topicViewModel.topic.voicePlaying = YES;
+        [lastPlayBtn_ setImage:[UIImage imageNamed:@"playButtonPlay"] forState:UIControlStateNormal];
+        [playBtn setImage:[UIImage imageNamed:@"playButtonPause"] forState:UIControlStateNormal];
+    }else{
+        if(lastTopicM_.voicePlaying){
+            [voice_player_ pause];
+            [avTimer_ setFireDate:[NSDate distantFuture]];
+            self.topicViewModel.topic.voicePlaying = NO;
+            [playBtn setImage:[UIImage imageNamed:@"playButtonPlay"] forState:UIControlStateNormal];
+        }else{
+            [[NSNotificationCenter defaultCenter] addObserver:self
+                                                     selector:@selector(playerItemDidReachEnd:)
+                                                         name:AVPlayerItemDidPlayToEndTimeNotification
+                                                       object:self.playerItem];
+            progressV_.frame = CGRectMake(playBtn.frame.origin.x-2, playBtn.frame.origin.y-2, playBtn.frame.size.width+4, playBtn.frame.size.height+4);
+            [self insertSubview:progressV_ belowSubview:self.voicePlayButton];
+            
+            [voice_player_ play];
+            [avTimer_ setFireDate:[NSDate date]];
+            self.topicViewModel.topic.voicePlaying = YES;
+            [playBtn setImage:[UIImage imageNamed:@"playButtonPause"] forState:UIControlStateNormal];
+        }
+    }
+    lastTopicM_ = self.topicViewModel.topic;
+    lastPlayBtn_ = playBtn;
+    progressV_.hidden = !self.topicViewModel.topic.voicePlaying;
+    
+}
+    
+-(void) playerItemDidReachEnd:(AVPlayerItem *)playerItem{
+    [[NSNotificationCenter defaultCenter] removeObserver:self name:AVPlayerItemDidPlayToEndTimeNotification object:self.playerItem];
+    lastTopicM_.voicePlaying = NO;
+    self.topicViewModel.topic.voicePlaying = NO;
+    [lastPlayBtn_ setImage:[UIImage imageNamed:@"playButtonPlay"] forState:UIControlStateNormal];
+    [self.voicePlayButton setImage:[UIImage imageNamed:@"playButtonPlay"] forState:UIControlStateNormal];
+    [voice_player_ seekToTime:kCMTimeZero];
+    [progressV_ setProgress:0 animated:NO];
+    [progressV_ removeFromSuperview];
+    progressV_.hidden = YES;
+}
+    
+    
 
 - (instancetype)initWithFrame:(CGRect)frame
 {
@@ -238,8 +347,26 @@
 - (void)layoutSubviews
 {
     [super layoutSubviews];
-    
+    progressV_.frame = CGRectMake(lastPlayBtn_.frame.origin.x-2, lastPlayBtn_.frame.origin.y-2, lastPlayBtn_.frame.size.width+4, lastPlayBtn_.frame.size.height+4);
     [self setNeedsDisplay];
 }
+-(void)setPlayCallback:(void (^)(void))playCallback{
+    [voice_player_ pause];
+    
+    lastTopicM_.voicePlaying = NO;
+    [lastPlayBtn_ setImage:[UIImage imageNamed:@"playButtonPlay"] forState:UIControlStateNormal];
+    [[NSNotificationCenter defaultCenter]removeObserver:self];
+    //[avTimer_ invalidate];
+    //avTimer_= nil;
+    SUPLog(@"=======setPlayCallback=====");
+}
 
+-(void)dealloc{
+    [voice_player_ pause];
+     NSLog(@"dealloc---%@", self.class);
+    lastTopicM_.voicePlaying = NO;
+    [lastPlayBtn_ setImage:[UIImage imageNamed:@"playButtonPlay"] forState:UIControlStateNormal];
+    [[NSNotificationCenter defaultCenter]removeObserver:self];
+    
+}
 @end

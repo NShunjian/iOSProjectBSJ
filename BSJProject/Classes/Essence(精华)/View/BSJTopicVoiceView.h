@@ -14,5 +14,6 @@
 
 /** <#digest#> */
 @property (nonatomic, strong) BSJTopicViewModel *topicViewModel;
-
+@property (nonatomic, copy) void(^playCallback)(void);
+//@property (nonatomic, strong) BSJTopic *topic;
 @end

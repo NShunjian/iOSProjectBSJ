@@ -77,6 +77,8 @@ const CGFloat BSJCellContentImageMaxHeight = 1000.0;
         _pictureFrame = CGRectMake(BSJCellScreenMargin + BSJCellEdageMargin, 10 + 10 + BSJCellHeaderSize + 10 + contentTextHeight + 10, contentTextWidth, pictureHeight);
         
         _cellHeight += pictureHeight + 10;
+            self.isBigPicture = topic.width < topic.height;
+            
     }
           }
     

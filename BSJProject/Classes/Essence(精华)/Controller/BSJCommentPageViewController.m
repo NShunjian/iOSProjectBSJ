@@ -12,6 +12,7 @@
 #import "BSJTopicCmtCell.h"
 #import "SUPCommentHeaderView.h"
 
+static NSString *kVideoCover = @"https://upload-images.jianshu.io/upload_images/635942-14593722fe3f0695.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240";
 @interface BSJCommentPageViewController ()
 /** <#digest#> */
 @property (nonatomic, strong) BSJTopicViewModel *c_topicViewModel;
@@ -26,6 +27,12 @@
 /** 弹出的单利menuVC */
 @property (weak, nonatomic) UIMenuController *menu;
 
+@property(nonatomic, strong)NSMutableArray *urls;
+
+@property (nonatomic, strong) UIImageView *containerView;
+@property (nonatomic, strong) UIButton *playBtn;
+
+@property(nonatomic, strong)SUPTopicCell *header;
 @end
 
 @implementation BSJCommentPageViewController
@@ -34,7 +41,6 @@
 //{
 //    return [super initWithStyle:UITableViewStyleGrouped];
 //}
-
 - (void)viewDidLoad {
     [super viewDidLoad];
     
@@ -46,11 +52,18 @@
     //ios8以后才有自动计算cell行高
     self.tableView.rowHeight = UITableViewAutomaticDimension;
     self.tableView.estimatedRowHeight = 100;
-    
+   
     [self setupHeader];
+//     @weakify(self)
+//    self.player.playerDidToEnd = ^(id  _Nonnull asset) {
+//        @strongify(self)
+//        [self.player stop];
+//    };
 
 }
-
+- (void)viewWillLayoutSubviews {
+    [super viewWillLayoutSubviews];
+}
 
 - (void)viewDidLayoutSubviews
 {
@@ -84,13 +97,23 @@
 }
 - (void)setupHeader
 {
-    SUPTopicCell *header = [SUPTopicCell topicCellWithTableView:self.tableView];
+    _header = [SUPTopicCell topicCellWithTableView:self.tableView];
+    self.containerView.frame = CGRectMake(0, 0, self.c_topicViewModel.pictureFrame.size.width, self.c_topicViewModel.pictureFrame.size.height);
+    [_header.videoView addSubview:self.containerView];
+    self.playBtn.frame = CGRectMake((self.c_topicViewModel.pictureFrame.size.width-40)*0.5, (self.c_topicViewModel.pictureFrame.size.height-60)*0.5, 40, 60);
+    [_header.videoView insertSubview:self.playBtn aboveSubview:self.containerView];
+//    [self.containerView addSubview:self.playBtn];
+    [self.player updateNoramlPlayerWithContainerView:_header.videoView];
     
-    header.topicViewModel = self.c_topicViewModel;
+
+    _header.topicViewModel = self.c_topicViewModel;
     
-    header.SUP_height = self.c_topicViewModel.cellHeight;
+    _header.SUP_height = self.c_topicViewModel.cellHeight;
     
-    self.tableView.tableHeaderView = header;
+    self.tableView.tableHeaderView = _header;
+    
+    [_header setNormalMode];
+    
 }
 
 - (void)loadMore:(BOOL)isMore
@@ -269,6 +292,12 @@
 /** 左边的按钮的点击 */
 -(void)leftButtonEvent:(UIButton *)sender navigationBar:(SUPNavigationBar *)navigationBar
 {
+    if (_header.voiceView.topicViewModel) {
+        _header.voiceView.playCallback = ^{
+            
+        };
+    }
+    
     [self.navigationController popViewControllerAnimated:YES];
 }
 -(UIImage *)SUPNavigationBarRightButtonImage:(UIButton *)rightButton navigationBar:(SUPNavigationBar *)navigationBar{
@@ -277,5 +306,63 @@
     rightButton.size = CGSizeMake(70, 44);
 
     return nil;
+}
+
+
+
+- (UIImageView *)containerView {
+    if (!_containerView) {
+        _containerView = [UIImageView new];
+        [_containerView setImageWithURLString:kVideoCover placeholder:[ZFUtilities imageWithColor:[UIColor colorWithRed:220/255.0 green:220/255.0 blue:220/255.0 alpha:1] size:CGSizeMake(1, 1)]];
+    }
+    return _containerView;
+}
+
+- (UIButton *)playBtn {
+    if (!_playBtn) {
+        _playBtn = [UIButton buttonWithType:UIButtonTypeCustom];
+        [_playBtn setImage:[UIImage imageNamed:@"ZFPlayer_repeat_video"] forState:UIControlStateNormal];
+        [_playBtn addTarget:self action:@selector(playClick:) forControlEvents:UIControlEventTouchUpInside];
+    }
+    return _playBtn;
+}
+- (void)playClick:(UIButton *)sender {
+    if (self.detailVCPlayCallback) {
+        self.detailVCPlayCallback();
+    }
+    [self.player updateNoramlPlayerWithContainerView:_header.videoView];
+}
+
+- (UIStatusBarStyle)preferredStatusBarStyle {
+    if (self.player.isFullScreen) {
+        return UIStatusBarStyleLightContent;
+    }
+    return UIStatusBarStyleDefault;
+}
+
+- (BOOL)prefersStatusBarHidden {
+    return self.player.isStatusBarHidden;
+}
+
+- (UIStatusBarAnimation)preferredStatusBarUpdateAnimation {
+    return UIStatusBarAnimationSlide;
+}
+
+- (BOOL)shouldAutorotate {
+    return self.player.shouldAutorotate;
+}
+
+- (UIInterfaceOrientationMask)supportedInterfaceOrientations {
+    if (self.player.isFullScreen) {
+        return UIInterfaceOrientationMaskLandscape;
+    }
+    return UIInterfaceOrientationMaskPortrait;
+}
+- (void)willMoveToParentViewController:(UIViewController *)parent {
+    if (!parent) {
+        if (self.detailVCPopCallback) {
+            self.detailVCPopCallback();
+        }
+    }
 }
 @end

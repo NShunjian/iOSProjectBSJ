@@ -12,6 +12,10 @@
 #import "SUPGuidePushView.h"
 #import "BSJTopicListDAL.h"
 #import "SUPTopWindow.h"
+
+#import <AVFoundation/AVFoundation.h>
+#import <MediaPlayer/MPMediaItem.h>
+#import <MediaPlayer/MPNowPlayingInfoCenter.h>
 @interface SUPAppDelegate ()<UITabBarControllerDelegate>
 
 @end
@@ -28,6 +32,8 @@
 }
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
+    CFUSER;
+    CFUSER.userName = @"chenfeng";
 //     [SUPTopWindow show];
     [self setUpHomeViewController];
     //导向页
@@ -81,6 +87,12 @@
 - (void)applicationWillTerminate:(UIApplication *)application {
     // Called when the application is about to terminate. Save data if appropriate. See also applicationDidEnterBackground:.
 }
+
+- (void)remoteControlReceivedWithEvent: (UIEvent *) receivedEvent
+{
+    [CF_NOTI_CENTER postNotificationName:@"remoteControl" object:nil userInfo:@{@"event":receivedEvent}];
+}
+
 
 #pragma mark 键盘收回管理
 -(void)configureBoardManager

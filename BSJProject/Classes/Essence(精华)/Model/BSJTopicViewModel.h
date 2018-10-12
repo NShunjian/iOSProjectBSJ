@@ -59,4 +59,5 @@
 /** 播放时长 00 : 00 */
 @property (nonatomic, copy) NSString *playLength;
 
+@property (nonatomic, assign) BOOL isVerticalVideo;
 @end

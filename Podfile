@@ -57,7 +57,15 @@ pod 'Toast'
 # 进度
 pod 'M13ProgressSuite'
 # 列表视频
-pod 'ZFPlayer'
+#pod 'ZFPlayer'
+#pod 'ZFPlayer/AVPlayer'
+#pod 'ZFPlayer/ControlView'
+#pod 'ZFPlayer/ijkplayer'
+#pod 'ZFPlayer/KSYMediaPlayer'
 
 pod 'NJKWebViewProgress'
+# 音频
+#pod 'DFPlayer'
+pod 'FreeStreamer'
+pod 'DACircularProgress'
 end

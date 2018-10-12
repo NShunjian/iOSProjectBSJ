@@ -11,6 +11,7 @@
 #import <M13ProgressViewRing.h>
 #import "VIDMoviePlayerViewController.h"
 
+
 @interface BSJTopicVideoView ()
 /** <#digest#> */
 @property (weak, nonatomic) UIImageView *pictureImageView;
@@ -57,8 +58,6 @@
 - (void)setTopicViewModel:(BSJTopicViewModel *)topicViewModel
 {
     _topicViewModel = topicViewModel;
-    
-    
     
     // 1, playcount
     self.voicePlayCountLabel.text = [NSString stringWithFormat:@"%zd播放", topicViewModel.topic.playfcount];
@@ -220,13 +219,20 @@
 
 
 
-
-
 - (void)playVideo:(UIButton *)btn
 {
-    VIDMoviePlayerViewController *playerVc = [[VIDMoviePlayerViewController alloc] init];
-    playerVc.videoURL = self.topicViewModel.topic.videoUrl.absoluteString;
-    [self.viewController.navigationController pushViewController:playerVc animated:YES];
+    self.playCallback();
+    
+    
+    
+    
+//    ZFNotAutoPlayViewController *zf = [[ZFNotAutoPlayViewController alloc]init];
+//    [self.viewController.navigationController pushViewController:zf animated:YES];
+    
+//    [self play:nil];
+//    VIDMoviePlayerViewController *playerVc = [[VIDMoviePlayerViewController alloc] init];
+//    playerVc.videoURL = self.topicViewModel.topic.videoUrl.absoluteString;
+//    [self.viewController.navigationController pushViewController:playerVc animated:YES];
 }
 
 

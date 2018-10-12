@@ -22,6 +22,8 @@
 /**  用户昵称 */
 @property (nonatomic, copy) NSString *name;
 
+@property(nonatomic, copy) NSString *screen_name;
+
 /** 头像 */
 @property (nonatomic, strong) NSURL *profile_image;
 
@@ -100,6 +102,8 @@
 /** 热门评论 */
 @property (nonatomic, strong) NSMutableArray<BSJTopicTopComent *> *topCmts;
 
+
+@property (nonatomic, assign,getter=is_voicePlaying) BOOL voicePlaying;
 @end
 
 
