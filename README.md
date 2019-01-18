@@ -5,6 +5,9 @@ iOS 完整可上线项目 包含新闻浏览, 视屏播放, 音频播放, 音乐
 
 <h2><a id="homeList">首页</a></h2>
 <div>
+<img src="./imgs/QQ20190118-195950-HD.gif" width="24%">|
+<img src="./imgs/QQ20190118-200137-HD.gif" width="24%">|
+<img src="./imgs/QQ20190118-200502-HD.gif" width="24%">|
 <img src="./imgs/QQ20190118-181228-HD.gif" width="24%">|
 <img src="./imgs/QQ20190118-174446-HD.gif" width="24%">|
 <img src="./imgs/QQ20190118-175346-HD.gif" width="24%">|
