@@ -7,7 +7,7 @@ IOSBSJProject 完整可上线项目 包含新闻浏览, 视屏播放, 音频播�
 
 
 
-[<h2><a id="homeList">首页</a></h2>](#)
+[<h2>首页</h2>](#)
 <div>
 <img src="./imgs/QQ20190118-195950-HD.gif" width="24%">|
 <img src="./imgs/QQ20190118-200137-HD.gif" width="24%">|
